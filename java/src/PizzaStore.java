@@ -354,21 +354,124 @@ public class PizzaStore {
     * Creates a new user
     **/
    public static void CreateUser(PizzaStore esql){
-   }//end CreateUser
+      // we need to aggregate all of the required information for the user
+      int setFav = 0;
+      String query = "INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES (";
 
+      try {         
+         System.out.print("\tCreate login: $"); // login
+         String login = in.readLine();
+         query += "'" + login + "', ";
+
+         System.out.print("\tCreate password: $"); // password
+         String password = in.readLine();
+         query += "'" + password + "', ";
+
+         System.out.print("\tCreate role: $"); // role
+         String role = in.readLine();
+         query += "'" + role + "', ";
+
+         System.out.print("\tWhat is your favorite item: $"); // fav item
+         String favItem = "no favorite";
+         favItem = in.readLine();
+
+         query += "'" + favItem + "', ";
+
+         System.out.print("\tPhone Number: $"); // phone number
+         String phoneNumber = in.readLine();
+         query += "'" + phoneNumber + "');"; 
+
+         int rowCount = esql.executeQuery(query);
+         System.out.println("Successfully created user\n Query: " + query); // Debugging output
+      } catch(Exception e) {
+         System.err.println (e.getMessage());
+      }
+   }//end CreateUser
 
    /*
     * Check log in credentials for an existing user
     * @return User login or null is the user does not exist
     **/
-   public static String LogIn(PizzaStore esql){
-      return null;
-   }//end
+   public static String LogIn(PizzaStore esql) {
+      try {
+         System.out.print("Enter login: ");
+         String login = in.readLine();
+
+         System.out.print("Enter password: ");
+         String password = in.readLine();
+
+         // check if the user exists with the given login and password
+         String query = "SELECT login FROM Users WHERE login = '" + login + "' AND password = '" + password + "';";
+         int userCount = esql.executeQuery(query);
+
+         if (userCount > 0) {
+               System.out.println("Login successful!");
+               return login; // Return the login if authentication succeeds
+         } else {
+               System.out.println("Invalid login or password.");
+               return null;
+         }
+      } catch (Exception e) {
+         System.out.println("Error: " + e.getMessage());
+         return null;
+      }
+   } //end
 
 // Rest of the functions definition go in here
 
-   public static void viewProfile(PizzaStore esql) {}
-   public static void updateProfile(PizzaStore esql) {}
+   public static void viewProfile(PizzaStore esql) {
+      try {
+         System.out.print("Enter login: ");
+         String login = in.readLine();
+
+         String query = "SELECT favoriteItems, phoneNum FROM Users WHERE login = '" + login + "';";
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+
+         if (!result.isEmpty()) {
+               System.out.println("\n--- User Profile ---");
+               System.out.println("Favorite Items: " + result.get(0).get(0));
+               System.out.println("Phone Number: " + result.get(0).get(1));
+         } else {
+               System.out.println("User not found.");
+         }
+      } catch (Exception e) {
+         System.out.println("Error: " + e.getMessage());
+      }
+   }
+
+   public static void updateProfile(PizzaStore esql) {
+      try {
+         System.out.print("Enter login: ");
+         String login = in.readLine();
+
+         System.out.println("\n--- Update Profile ---");
+         System.out.println("1. Change Password");
+         System.out.println("2. Change Phone Number");
+         System.out.print("Select an option: ");
+         int choice = Integer.parseInt(in.readLine());
+
+         String query = "";
+         if (choice == 1) {
+               System.out.print("Enter new password: ");
+               String newPassword = in.readLine();
+               query = "UPDATE Users SET password = '" + newPassword + "' WHERE login = '" + login + "';";
+         } else if (choice == 2) {
+               System.out.print("Enter new phone number: ");
+               String newPhone = in.readLine();
+               query = "UPDATE Users SET phoneNum = '" + newPhone + "' WHERE login = '" + login + "';";
+         } else {
+               System.out.println("Invalid option.");
+               return;
+         }
+
+         esql.executeUpdate(query);
+         System.out.println("Profile updated successfully!");
+
+      } catch (Exception e) {
+         System.out.println("Error: " + e.getMessage());
+      }
+   }
+
    public static void viewMenu(PizzaStore esql) {}
    public static void placeOrder(PizzaStore esql) {}
    public static void viewAllOrders(PizzaStore esql) {}

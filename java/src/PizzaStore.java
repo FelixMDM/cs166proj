@@ -35,6 +35,8 @@ public class PizzaStore {
    // reference to physical database connection.
    private Connection _connection = null;
 
+   public String login = null;
+   public String password = null;
    // handling the keyboard inputs through a BufferedReader
    // This variable can be global for convenience.
    static BufferedReader in = new BufferedReader(
@@ -355,36 +357,24 @@ public class PizzaStore {
     **/
    public static void CreateUser(PizzaStore esql){
       // we need to aggregate all of the required information for the user
-      int setFav = 0;
-      String query = "INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES (";
-
-      try {         
-         System.out.print("\tCreate login: $"); // login
-         String login = in.readLine();
-         query += "'" + login + "', ";
-
-         System.out.print("\tCreate password: $"); // password
+      try {
+         System.out.print("Enter username: ");
+         String username = in.readLine();
+         System.out.print("Enter password: ");
          String password = in.readLine();
-         query += "'" + password + "', ";
+         System.out.print("Enter phone number: ");
+         String phone = in.readLine();
 
-         System.out.print("\tCreate role: $"); // role
-         String role = in.readLine();
-         query += "'" + role + "', ";
+         String query = "INSERT INTO Users (login, password, phoneNum, role, favoriteItems) VALUES ('" 
+                + username + "', '" 
+                + password + "', '" 
+                + phone + "', 'customer', '');";
 
-         System.out.print("\tWhat is your favorite item: $"); // fav item
-         String favItem = "no favorite";
-         favItem = in.readLine();
 
-         query += "'" + favItem + "', ";
-
-         System.out.print("\tPhone Number: $"); // phone number
-         String phoneNumber = in.readLine();
-         query += "'" + phoneNumber + "');"; 
-
-         int rowCount = esql.executeQuery(query);
+         esql.executeUpdate(query);
          System.out.println("Successfully created user\n Query: " + query); // Debugging output
       } catch(Exception e) {
-         System.err.println (e.getMessage());
+         System.err.println(e.getMessage());
       }
    }//end CreateUser
 
@@ -394,21 +384,24 @@ public class PizzaStore {
     **/
    public static String LogIn(PizzaStore esql) {
       try {
-         System.out.print("Enter login: ");
-         String login = in.readLine();
+         System.out.print("Enter username: ");
+         String username = in.readLine();
+         esql.login = username;
 
          System.out.print("Enter password: ");
          String password = in.readLine();
+         esql.password = password;
 
-         // check if the user exists with the given login and password
-         String query = "SELECT login FROM Users WHERE login = '" + login + "' AND password = '" + password + "';";
-         int userCount = esql.executeQuery(query);
+         String query = "SELECT role FROM Users WHERE login = '" + username + "' AND password = '" + password + "';";
 
-         if (userCount > 0) {
-               System.out.println("Login successful!");
-               return login; // Return the login if authentication succeeds
+         List<List<String>> result = esql.executeQueryAndReturnResult(query); 
+
+         if (result.size() > 0) {
+               System.out.println("Login successful! Welcome, " + result.get(0).get(0));
+
+               return result.get(0).get(0);
          } else {
-               System.out.println("Invalid login or password.");
+               System.out.println("Invalid credentials. Please try again.");
                return null;
          }
       } catch (Exception e) {
@@ -421,10 +414,8 @@ public class PizzaStore {
 
    public static void viewProfile(PizzaStore esql) {
       try {
-         System.out.print("Enter login: ");
-         String login = in.readLine();
-
-         String query = "SELECT favoriteItems, phoneNum FROM Users WHERE login = '" + login + "';";
+         
+         String query = "SELECT favoriteItems, phoneNum FROM Users WHERE login = '" + esql.login + "';";
          List<List<String>> result = esql.executeQueryAndReturnResult(query);
 
          if (!result.isEmpty()) {
@@ -474,6 +465,7 @@ public class PizzaStore {
 
    public static void viewMenu(PizzaStore esql) {}
    public static void placeOrder(PizzaStore esql) {}
+
    public static void viewAllOrders(PizzaStore esql) {}
    public static void viewRecentOrders(PizzaStore esql) {}
    public static void viewOrderInfo(PizzaStore esql) {}

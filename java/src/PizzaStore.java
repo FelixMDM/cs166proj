@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.lang.Math;
 import java.time.Instant;
+import java.io.IOException;
 
 /**
  * This class defines a simple embedded SQL utility class that is designed to
@@ -353,6 +354,22 @@ public class PizzaStore {
       return input;
    }//end readChoice
 
+   public static String readString() {
+      String input; 
+
+      do {
+         System.out.print("Please make your choice: ");
+         try {
+            input = in.readLine();
+            break;
+         }catch (Exception e) {
+            System.out.println("Your input is invalid!");
+            continue;
+         }
+      } while (true);
+      return input;
+   }
+
    /*
     * Creates a new user
     **/
@@ -398,7 +415,7 @@ public class PizzaStore {
          List<List<String>> result = esql.executeQueryAndReturnResult(query); 
 
          if (result.size() > 0) {
-               System.out.println("Login successful! Welcome, " + result.get(0).get(0));
+               System.out.println("Login successful! Welcome, " + username);
 
                return result.get(0).get(0);
          } else {
@@ -464,7 +481,69 @@ public class PizzaStore {
       }
    }
 
-   public static void viewMenu(PizzaStore esql) {}
+   public static void viewMenu(PizzaStore esql) {
+      try {
+         while (true) {
+               System.out.println("\n--- Menu Options ---");
+               System.out.println("1. View all items");
+               System.out.println("2. Search for items");
+               System.out.println("3. Exit");
+               System.out.print("Select an option: ");  
+
+               int choice = readChoice();
+               switch (choice) {
+                  case 1:
+                     displayAllItems(esql);
+                     break;
+                  case 2:
+                     searchItems(esql);
+                     break;
+                  case 3:
+                     return;
+                  default:
+                     System.out.println("Invalid option. Please try again.");
+               }
+         }
+      } catch (Exception e) {
+         System.out.println("Error: " + e.getMessage());
+      }
+   }
+
+   private static void displayAllItems(PizzaStore esql) throws IOException, SQLException {
+      String query = "SELECT * FROM Items;";
+      esql.executeQueryAndPrintResult(query);
+      
+      while (true) {
+         System.out.print("\nFilter by ('price asc', 'price desc') or 'exit': ");
+         String modifier = in.readLine().trim().toLowerCase();
+         
+         if (modifier.equals("exit")) {
+               return;
+         }
+         
+         switch (modifier) {
+               case "price asc":
+                  query = "SELECT * FROM Items ORDER BY price ASC;";
+                  esql.executeQueryAndPrintResult(query);
+                  break;
+               case "price desc":
+                  query = "SELECT * FROM Items ORDER BY price DESC;";
+                  esql.executeQueryAndPrintResult(query);
+                  break;
+               default:
+                  System.out.println("Invalid filter option. Please try again.");
+         }
+      }
+   }
+
+   private static void searchItems(PizzaStore esql) throws IOException, SQLException {
+      System.out.print("\nEnter Search parameter (ex: drinks, sides, etc,...): ");
+      String searchTerm = in.readLine().trim();
+      
+      String query = "SELECT * FROM Items WHERE typeOfItem = '" + searchTerm + "';";
+      esql.executeQueryAndPrintResult(query);
+   }
+
    public static void placeOrder(PizzaStore esql) {
       try {
          System.out.println("Choose Store: ");

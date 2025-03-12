@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.ArrayList;
 import java.lang.Math;
+import java.time.Instant;
 
 /**
  * This class defines a simple embedded SQL utility class that is designed to
@@ -464,10 +465,59 @@ public class PizzaStore {
    }
 
    public static void viewMenu(PizzaStore esql) {}
-   public static void placeOrder(PizzaStore esql) {}
+   public static void placeOrder(PizzaStore esql) {
+      try {
+         System.out.println("Choose Store: ");
+         String store = in.readLine();
 
+         // insert order into ORDERS now and get order ID
+         List<List<String>> result = esql.executeQueryAndReturnResult("SELECT MAX(orderID) FROM FoodOrder;");
+         int orderID = 1;
+         if(!result.isEmpty()){
+            orderID = Integer.parseInt(result.get(0).get(0)) + 1;
+         }
+         String query = "INSERT INTO FoodOrder (orderID, login, storeID, totalPrice, orderTimestamp, orderStatus) VALUES ('" 
+            + orderID + "', '" 
+            + esql.login + "', '" 
+            + store + "', 0, '" + Instant.now() + "' , 'incomplete');";
+         esql.executeUpdate(query);
+
+
+         System.out.println("Choose item(Enter DONE when finished):  ");
+         String item = in.readLine();
+         int totalPrice = 0;
+         while(!item.equals("DONE")){
+            System.out.println("Choose quantity: ");
+            int quantity = readChoice();
+
+            double price = Double.parseDouble(esql.executeQueryAndReturnResult("SELECT price FROM Items WHERE itemName = '" + item + "';").get(0).get(0));
+            totalPrice += price * quantity;
+            // insert order into itemonorder
+            query = "INSERT INTO ItemsInOrder (orderID, itemName, quantity) VALUES ('" 
+               + orderID + "', '" 
+               + item + "', '" 
+               + quantity + "');";
+            esql.executeUpdate(query);
+            System.out.println("Choose item(Enter DONE when finished):  ");
+            item = in.readLine();
+         }
+         query = "UPDATE FoodOrder SET totalPrice = '" + totalPrice + "' WHERE orderID = '" + orderID + "';";
+         esql.executeUpdate(query);
+      }
+      catch (Exception e){
+         System.out.println("Error: " + e.getMessage());
+      }
+
+   }
    public static void viewAllOrders(PizzaStore esql) {}
-   public static void viewRecentOrders(PizzaStore esql) {}
+   public static void viewRecentOrders(PizzaStore esql) {
+      String query = "SELECT orderID FROM FoodOrder ORDER BY orderTimeStamp DESC LIMIT(5)";
+      try{
+         esql.executeQueryAndPrintResult(query);
+      } catch (Exception e) {
+         System.out.println("Error: " + e.getMessage());
+      }
+   }
    public static void viewOrderInfo(PizzaStore esql) {}
    public static void viewStores(PizzaStore esql) {}
    public static void updateOrderStatus(PizzaStore esql) {}

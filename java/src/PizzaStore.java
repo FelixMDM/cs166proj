@@ -747,6 +747,9 @@ public class PizzaStore {
          System.out.print("New Phone Number Items(0 for no change): ");
          String phone = in.readLine();
          if(!password.equals("0")){
+            if(user.equals(esql.login)){
+               esql.password = password;
+            }
             esql.executeUpdate("UPDATE Users SET password = '" + password + "' WHERE login = '" + user + "';");
          }
          if(!role.equals("0")){
@@ -759,6 +762,9 @@ public class PizzaStore {
             esql.executeUpdate("UPDATE Users SET phoneNum = '" + phone + "' WHERE login = '" + user + "';");
          }
          if(!newUser.equals("0")){
+            if(user.equals(esql.login)){
+               esql.login = newUser;
+            }
             esql.executeUpdate("UPDATE FoodOrder SET login = '" + newUser + "' WHERE login = '" + user + "';");
             esql.executeUpdate("UPDATE Users SET login = '" + newUser + "' WHERE login = '" + user + "';");
          }

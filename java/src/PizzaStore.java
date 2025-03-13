@@ -403,19 +403,19 @@ public class PizzaStore {
    public static String LogIn(PizzaStore esql) {
       try {
          System.out.print("Enter username: ");
-         String username = in.readLine();
+         String username = in.readLine().trim();
          esql.login = username;
 
          System.out.print("Enter password: ");
-         String password = in.readLine();
+         String password = in.readLine().trim();
          esql.password = password;
 
          String query = "SELECT role FROM Users WHERE login = '" + username + "' AND password = '" + password + "';";
-
+         esql.executeQueryAndPrintResult(query);
          List<List<String>> result = esql.executeQueryAndReturnResult(query); 
 
          if (result.size() > 0) {
-               System.out.println("Login successful! Welcome, " + username);
+               System.out.println("Login successful! Welcome, '" + username + "'");
 
                return result.get(0).get(0);
          } else {

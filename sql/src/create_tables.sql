@@ -37,7 +37,7 @@ CREATE TABLE FoodOrder ( orderID integer NOT NULL,
                            orderStatus char(50),
                            PRIMARY KEY(orderID),
                            FOREIGN KEY(login) REFERENCES Users(login)
-                           ON DELETE CASCADE,
+                           ON DELETE CASCADE ON UPDATE CASCADE,
                            FOREIGN KEY(storeID) REFERENCES Store(storeID)
                            ON DELETE CASCADE
 );

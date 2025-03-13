@@ -282,11 +282,11 @@ public class PizzaStore {
                 System.out.println("8. View Stores"); 
 
                 //**the following functionalities should only be able to be used by drivers & managers**
-                System.out.println("9. Update Order Status");
+                if(!authorisedUser.trim().equals("customer")) System.out.println("9. Update Order Status");
 
                 //**the following functionalities should ony be able to be used by managers**
-                System.out.println("10. Update Menu");
-                System.out.println("11. Update User");
+                if(authorisedUser.trim().equals("manager")) System.out.println("10. Update Menu");
+                if(authorisedUser.trim().equals("manager")) System.out.println("11. Update User");
 
                 System.out.println(".........................");
                 System.out.println("20. Log out");
@@ -295,13 +295,13 @@ public class PizzaStore {
                    case 2: updateProfile(esql); break;
                    case 3: viewMenu(esql); break;
                    case 4: placeOrder(esql); break;
-                   case 5: viewAllOrders(esql); break;
-                   case 6: viewRecentOrders(esql); break;
-                   case 7: viewOrderInfo(esql); break;
+                   case 5: viewAllOrders(esql, authorisedUser); break;
+                   case 6: viewRecentOrders(esql, authorisedUser); break;
+                   case 7: viewOrderInfo(esql, authorisedUser); break;
                    case 8: viewStores(esql); break;
-                   case 9: updateOrderStatus(esql); break;
-                   case 10: updateMenu(esql); break;
-                   case 11: updateUser(esql); break;
+                   case 9: if(authorisedUser.trim().equals("customer")) break; updateOrderStatus(esql); break;
+                   case 10: if(!authorisedUser.trim().equals("manager")) break; updateMenu(esql); break;
+                   case 11: if(!authorisedUser.trim().equals("manager")) break; updateUser(esql); break;
 
 
 
@@ -544,6 +544,7 @@ public class PizzaStore {
       esql.executeQueryAndPrintResult(query);
    }
 
+   // Add logic to limit to user
    public static void placeOrder(PizzaStore esql) {
       try {
          System.out.println("Choose Store: ");
@@ -588,20 +589,164 @@ public class PizzaStore {
       }
 
    }
-   public static void viewAllOrders(PizzaStore esql) {}
-   public static void viewRecentOrders(PizzaStore esql) {
-      String query = "SELECT orderID FROM FoodOrder ORDER BY orderTimeStamp DESC LIMIT(5)";
+   // Done
+   public static void viewAllOrders(PizzaStore esql, String authorisedUser) {
+      try {
+         if(authorisedUser.trim().equals("customer")){
+            esql.executeQueryAndPrintResult("SELECT orderID FROM FoodOrder WHERE login = '" + esql.login + "' ORDER BY orderTimeStamp DESC");
+            return;
+         } else{
+            esql.executeQueryAndPrintResult("SELECT orderID FROM FoodOrder ORDER BY orderTimeStamp DESC");
+         }
+      } catch (Exception e){
+         System.out.println("Error: " + e.getMessage());
+      }
+   }
+   // DONE
+   public static void viewRecentOrders(PizzaStore esql, String authorisedUser) {
       try{
-         esql.executeQueryAndPrintResult(query);
+         if(authorisedUser.trim().equals("customer")){
+            esql.executeQueryAndPrintResult("SELECT orderID FROM FoodOrder WHERE login = '" + esql.login + "' ORDER BY orderTimeStamp DESC LIMIT(5)");
+            return;
+         } else{
+            esql.executeQueryAndPrintResult("SELECT orderID FROM FoodOrder ORDER BY orderTimeStamp DESC LIMIT(5)");
+         }
       } catch (Exception e) {
          System.out.println("Error: " + e.getMessage());
       }
    }
-   public static void viewOrderInfo(PizzaStore esql) {}
-   public static void viewStores(PizzaStore esql) {}
-   public static void updateOrderStatus(PizzaStore esql) {}
-   public static void updateMenu(PizzaStore esql) {}
-   public static void updateUser(PizzaStore esql) {}
+   // Add logic to limit to user
+   public static void viewOrderInfo(PizzaStore esql, String authorisedUser) {
+      try{
+         if(authorisedUser.trim().equals("customer")){
+            System.out.println("Choose Order: ");
+            String order = in.readLine();
+            esql.executeQueryAndPrintResult("SELECT * FROM FoodOrder WHERE orderID = '" + order + "' AND login ='" + esql.login + "';");
+            esql.executeQueryAndPrintResult("SELECT itemName, quantity FROM ItemsInOrder WHERE orderID = '" + order + "' AND login ='" + esql.login + "';");
+         } else{
+            System.out.println("Choose Order: ");
+            String order = in.readLine();
+            esql.executeQueryAndPrintResult("SELECT * FROM FoodOrder WHERE orderID = '" + order + "';");
+            esql.executeQueryAndPrintResult("SELECT itemName, quantity FROM ItemsInOrder WHERE orderID = '" + order + "';");
+         }
+         
+      } catch (Exception e){
+         System.out.println("Error: " + e.getMessage());
+      }
+   }
+   // Done
+   public static void viewStores(PizzaStore esql) {
+      try{
+         esql.executeQueryAndPrintResult("SELECT * FROM Store");
+      } catch (Exception e){
+         System.out.println("Error: " + e.getMessage());
+      }
+   }
+   // Done
+   public static void updateOrderStatus(PizzaStore esql) {
+      try {
+         System.out.println("Choose Order: ");
+         String order = in.readLine();
+         System.out.println("Choose Status: ");
+         String status = in.readLine();
+         String query = "UPDATE FoodOrder SET orderStatus = '" + status + "' WHERE orderID = '" + order + "';";
+         esql.executeUpdate(query);
+      } catch (Exception e){
+         System.out.println("Error: " + e.getMessage());
+      }
+   
+   }
+   // Done
+   public static void updateMenu(PizzaStore esql) {
+      try {
+         System.out.println("Update existing item, or add new item: \n 1. Update existing \n 2. Add New \n 3. Exit");
+         int choice = readChoice();
+         String item, price, ingredients, type, description;
+         switch(choice){
+            case 1:
+               System.out.println("Choose Item: ");
+               item = in.readLine();
+               System.out.println("New Price(0 for no change): ");
+               price = in.readLine();
+               System.out.println("New Ingredients(0 for no change): ");
+               ingredients = in.readLine();
+               System.out.println("New Type(0 for no change): ");
+               type = in.readLine();
+               System.out.println("New Description(0 for no change): ");
+               description = in.readLine();            
+               if(!price.equals("0")){
+                  esql.executeUpdate("UPDATE Items SET price = '" + price + "' WHERE itemName = '" + item + "';");
+               }
+               if(!ingredients.equals("0")){
+                  esql.executeUpdate("UPDATE Items SET ingredients = '" + ingredients + "' WHERE itemName = '" + item + "';");
+               }
+               if(!type.equals("0")){
+                  esql.executeUpdate("UPDATE Items SET typeOfItem = '" + type + "' WHERE itemName = '" + item + "';");
+               }
+               if(!description.equals("0")){
+                  esql.executeUpdate("UPDATE Items SET description = '" + description + "' WHERE itemName = '" + item + "';");
+               }
+               break;
+            case 2:
+               System.out.println("Item Name: ");
+               item = in.readLine();
+               System.out.println("Price: ");
+               price = in.readLine();
+               System.out.println("Ingredients: ");
+               ingredients = in.readLine();
+               System.out.println("Type: ");
+               type = in.readLine();
+               System.out.println("Description: ");
+               description = in.readLine();  
+               String query = "INSERT INTO Items (itemName, ingredients, typeOfItem, Price, description) VALUES ('" 
+                  + item + "', '" 
+                  + ingredients + "', '"
+                  + type + "', '"
+                  + price + "', '"
+                  + description + "');";
+               esql.executeUpdate(query);
+               break;
+         }
+      } catch (Exception e){
+         System.out.println("Error: " + e.getMessage());
+      }
+   }
+   // Done
+   public static void updateUser(PizzaStore esql) {
+      try{
+         System.out.println("Choose Login: ");
+         String user = in.readLine();
+         System.out.println("New Login(0 for no change): ");
+         String newUser = in.readLine();
+         System.out.println("New Password(0 for no change): ");
+         String password = in.readLine();
+         System.out.println("New Role(0 for no change): ");
+         String role = in.readLine();
+         System.out.println("New Favorite Items(0 for no change): ");
+         String favItem = in.readLine();
+         System.out.println("New Phone Number Items(0 for no change): ");
+         String phone = in.readLine();
+         if(!password.equals("0")){
+            esql.executeUpdate("UPDATE Users SET password = '" + password + "' WHERE login = '" + user + "';");
+         }
+         if(!role.equals("0")){
+            esql.executeUpdate("UPDATE Users SET role = '" + role + "' WHERE login = '" + user + "';");
+         }
+         if(!favItem.equals("0")){
+            esql.executeUpdate("UPDATE Users SET favoriteItems = '" + favItem + "' WHERE login = '" + user + "';");
+         }
+         if(!phone.equals("0")){
+            esql.executeUpdate("UPDATE Users SET phoneNum = '" + phone + "' WHERE login = '" + user + "';");
+         }
+         if(!newUser.equals("0")){
+            esql.executeUpdate("UPDATE FoodOrder SET login = '" + newUser + "' WHERE login = '" + user + "';");
+            esql.executeUpdate("UPDATE Users SET login = '" + newUser + "' WHERE login = '" + user + "';");
+         }
+      }
+      catch(Exception e){
+         System.out.println("Error: " + e.getMessage());
+      }
+   }
 
 
 }//end PizzaStore

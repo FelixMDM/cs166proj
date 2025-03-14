@@ -450,9 +450,6 @@ public class PizzaStore {
 
    public static void updateProfile(PizzaStore esql) {
       try {
-         System.out.print("Enter login: ");
-         String login = in.readLine();
-
          System.out.println("\n--- Update Profile ---");
          System.out.println("1. Change Password");
          System.out.println("2. Change Phone Number");
@@ -463,11 +460,11 @@ public class PizzaStore {
          if (choice == 1) {
                System.out.print("Enter new password: ");
                String newPassword = in.readLine();
-               query = "UPDATE Users SET password = '" + newPassword + "' WHERE login = '" + login + "';";
+               query = "UPDATE Users SET password = '" + newPassword + "' WHERE login = '" + esql.login + "';";
          } else if (choice == 2) {
                System.out.print("Enter new phone number: ");
                String newPhone = in.readLine();
-               query = "UPDATE Users SET phoneNum = '" + newPhone + "' WHERE login = '" + login + "';";
+               query = "UPDATE Users SET phoneNum = '" + newPhone + "' WHERE login = '" + esql.login + "';";
          } else {
                System.out.println("Invalid option.");
                return;
@@ -494,6 +491,7 @@ public class PizzaStore {
                switch (choice) {
                   case 1:
                      displayAllItems(esql);
+                     displayLessThan(esql, "all", "none");
                      break;
                   case 2:
                      searchItems(esql);
@@ -514,11 +512,11 @@ public class PizzaStore {
       esql.executeQueryAndPrintResult(query);
       
       while (true) {
-         System.out.print("\nFilter by ('price asc', 'price desc') or 'exit': ");
+         System.out.print("\nFilter by ('price asc', 'price desc' or 'exit'): ");
          String modifier = in.readLine().trim().toLowerCase();
          
          if (modifier.equals("exit")) {
-               return;
+            return;
          }
          
          switch (modifier) {
@@ -531,23 +529,45 @@ public class PizzaStore {
                   esql.executeQueryAndPrintResult(query);
                   break;
                default:
-                  System.out.println("Invalid filter option. Please try again.");
+                  break;
          }
+      }
+   }
+
+   public static void displayLessThan(PizzaStore esql, String category, String query) throws IOException, SQLException {
+      System.out.print("\nFilter by less than ('price' or 'exit'): ");
+      String modifier = in.readLine();
+
+      if (modifier.equals("exit")) {
+         return;
+      }
+
+      switch (category) {
+         case "all":
+            query = "SELECT * FROM Items WHERE price < ";
+
+            query += modifier + ";";
+            esql.executeQueryAndPrintResult(query);
+         case "search":
+            query = query.substring(0, query.length() - 1);
+            query += " AND price < " + modifier + ";";
+            esql.executeQueryAndPrintResult(query);
       }
    }
 
    private static void searchItems(PizzaStore esql) throws IOException, SQLException {
       System.out.print("\nEnter Search parameter (ex: drinks, sides, etc,...): ");
-      String searchTerm = in.readLine().trim();
+      String searchTerm = in.readLine();
       
-      String query = "SELECT * FROM Items WHERE typeOfItem = '" + searchTerm + "';";
+      String query = "SELECT * FROM Items WHERE TRIM(typeOfItem) = '" + searchTerm + "';";
       esql.executeQueryAndPrintResult(query);
+      displayLessThan(esql, "search", query);
    }
 
    // Add logic to limit to user
    public static void placeOrder(PizzaStore esql) {
       try {
-         System.out.println("Choose Store: ");
+         System.out.print("Choose Store: ");
          String store = in.readLine();
 
          // insert order into ORDERS now and get order ID
@@ -563,11 +583,11 @@ public class PizzaStore {
          esql.executeUpdate(query);
 
 
-         System.out.println("Choose item(Enter DONE when finished):  ");
+         System.out.print("Choose item(Enter DONE when finished):  ");
          String item = in.readLine();
          int totalPrice = 0;
          while(!item.equals("DONE")){
-            System.out.println("Choose quantity: ");
+            System.out.print("Choose quantity: ");
             int quantity = readChoice();
 
             double price = Double.parseDouble(esql.executeQueryAndReturnResult("SELECT price FROM Items WHERE itemName = '" + item + "';").get(0).get(0));
@@ -578,7 +598,7 @@ public class PizzaStore {
                + item + "', '" 
                + quantity + "');";
             esql.executeUpdate(query);
-            System.out.println("Choose item(Enter DONE when finished):  ");
+            System.out.print("Choose item(Enter DONE when finished):  ");
             item = in.readLine();
          }
          query = "UPDATE FoodOrder SET totalPrice = '" + totalPrice + "' WHERE orderID = '" + orderID + "';";
@@ -619,12 +639,12 @@ public class PizzaStore {
    public static void viewOrderInfo(PizzaStore esql, String authorisedUser) {
       try{
          if(authorisedUser.trim().equals("customer")){
-            System.out.println("Choose Order: ");
+            System.out.print("Choose Order: ");
             String order = in.readLine();
             esql.executeQueryAndPrintResult("SELECT * FROM FoodOrder WHERE orderID = '" + order + "' AND login ='" + esql.login + "';");
             esql.executeQueryAndPrintResult("SELECT itemName, quantity FROM ItemsInOrder WHERE orderID = '" + order + "' AND login ='" + esql.login + "';");
          } else{
-            System.out.println("Choose Order: ");
+            System.out.print("Choose Order: ");
             String order = in.readLine();
             esql.executeQueryAndPrintResult("SELECT * FROM FoodOrder WHERE orderID = '" + order + "';");
             esql.executeQueryAndPrintResult("SELECT itemName, quantity FROM ItemsInOrder WHERE orderID = '" + order + "';");
@@ -645,9 +665,9 @@ public class PizzaStore {
    // Done
    public static void updateOrderStatus(PizzaStore esql) {
       try {
-         System.out.println("Choose Order: ");
+         System.out.print("Choose Order: ");
          String order = in.readLine();
-         System.out.println("Choose Status: ");
+         System.out.print("Choose Status: ");
          String status = in.readLine();
          String query = "UPDATE FoodOrder SET orderStatus = '" + status + "' WHERE orderID = '" + order + "';";
          esql.executeUpdate(query);
@@ -659,20 +679,20 @@ public class PizzaStore {
    // Done
    public static void updateMenu(PizzaStore esql) {
       try {
-         System.out.println("Update existing item, or add new item: \n 1. Update existing \n 2. Add New \n 3. Exit");
+         System.out.print("Update existing item, or add new item: \n 1. Update existing \n 2. Add New \n 3. Exit");
          int choice = readChoice();
          String item, price, ingredients, type, description;
          switch(choice){
             case 1:
-               System.out.println("Choose Item: ");
+               System.out.print("Choose Item: ");
                item = in.readLine();
-               System.out.println("New Price(0 for no change): ");
+               System.out.print("New Price(0 for no change): ");
                price = in.readLine();
-               System.out.println("New Ingredients(0 for no change): ");
+               System.out.print("New Ingredients(0 for no change): ");
                ingredients = in.readLine();
-               System.out.println("New Type(0 for no change): ");
+               System.out.print("New Type(0 for no change): ");
                type = in.readLine();
-               System.out.println("New Description(0 for no change): ");
+               System.out.print("New Description(0 for no change): ");
                description = in.readLine();            
                if(!price.equals("0")){
                   esql.executeUpdate("UPDATE Items SET price = '" + price + "' WHERE itemName = '" + item + "';");
@@ -688,15 +708,15 @@ public class PizzaStore {
                }
                break;
             case 2:
-               System.out.println("Item Name: ");
+               System.out.print("Item Name: ");
                item = in.readLine();
-               System.out.println("Price: ");
+               System.out.print("Price: ");
                price = in.readLine();
-               System.out.println("Ingredients: ");
+               System.out.print("Ingredients: ");
                ingredients = in.readLine();
-               System.out.println("Type: ");
+               System.out.print("Type: ");
                type = in.readLine();
-               System.out.println("Description: ");
+               System.out.print("Description: ");
                description = in.readLine();  
                String query = "INSERT INTO Items (itemName, ingredients, typeOfItem, Price, description) VALUES ('" 
                   + item + "', '" 
@@ -714,17 +734,17 @@ public class PizzaStore {
    // Done
    public static void updateUser(PizzaStore esql) {
       try{
-         System.out.println("Choose Login: ");
+         System.out.print("Choose Login: ");
          String user = in.readLine();
-         System.out.println("New Login(0 for no change): ");
+         System.out.print("New Login(0 for no change): ");
          String newUser = in.readLine();
-         System.out.println("New Password(0 for no change): ");
+         System.out.print("New Password(0 for no change): ");
          String password = in.readLine();
-         System.out.println("New Role(0 for no change): ");
+         System.out.print("New Role(0 for no change): ");
          String role = in.readLine();
-         System.out.println("New Favorite Items(0 for no change): ");
+         System.out.print("New Favorite Items(0 for no change): ");
          String favItem = in.readLine();
-         System.out.println("New Phone Number Items(0 for no change): ");
+         System.out.print("New Phone Number Items(0 for no change): ");
          String phone = in.readLine();
          if(!password.equals("0")){
             if(user.equals(esql.login)){
